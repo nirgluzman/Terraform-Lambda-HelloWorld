@@ -50,6 +50,13 @@ resource "aws_iam_role_policy_attachment" "attach_iam_policy_to_iam_role" {
   policy_arn  = aws_iam_policy.iam_policy_for_lambda.arn
 }
 
+# CloudWatch Log Group resource -> when Terraform manages the log group, it is destroyed with 'terraform destroy'.
+# https://advancedweb.hu/how-to-manage-lambda-log-groups-with-terraform/#:~:text=With%20Lambda%2C%20there%20is%20one,least)%20one%20for%20each%20version.&text=If%20you%20attach%20this%20managed,all%20resources%20related%20to%20logs
+resource "aws_cloudwatch_log_group" "lambda_loggroup" {
+  name              = "/aws/lambda/${aws_lambda_function.terraform_lambda_func.function_name}"
+  retention_in_days = 14 # expiration to the log messages.
+}
+
 # Generates an archive from content, a file, or a directory of files.
 data "archive_file" "zip_the_js_code" {
  type        = "zip"
@@ -74,16 +81,4 @@ resource "aws_lambda_function" "terraform_lambda_func" {
       foo = "bar"
     }
   }
-}
-
-output "terraform_aws_role_output" {
-  value = aws_iam_role.lambda_role.name
-}
-
-output "terraform_aws_role_arn_output" {
-  value = aws_iam_role.lambda_role.arn
-}
-
-output "terraform_logging_arn_output" {
-  value = aws_iam_policy.iam_policy_for_lambda.arn
 }
